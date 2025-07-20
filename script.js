@@ -32,7 +32,7 @@ function parseFields(text) {
   document.getElementById("formSection").style.display = "block";
   const storeMatch = text.match(/MR\\.\\s?.*/i);
   const amountMatch = text.match(/RM\\s?([\\d.]+)/i);
-  const dateMatch = text.match(/\\d{2}\\/\\d{2}\\/\\d{4}/);
+  const dateMatch = text.match(/\d{2}\/\d{2}\/\d{4}/);
   document.getElementById("store").value = storeMatch ? storeMatch[0] : "";
   document.getElementById("amount").value = amountMatch ? amountMatch[1] : "";
   document.getElementById("datetime").value = dateMatch ? dateMatch[0] : new Date().toISOString().slice(0, 10);
