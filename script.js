@@ -1,63 +1,59 @@
-async function getAccessToken() {
-  const res = await fetch("https://aip.baidubce.com/oauth/2.0/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: "grant_type=client_credentials&client_id=Rn1ouMVSbEqJDNxU5vyqJmGU&secret_key=P9MXXYkTh2f3RIOjp5BMNAG1EQXUufaj"
-  });
-  const data = await res.json();
-  return data.access_token;
-}
+document.getElementById("uploadBtn").addEventListener("click", async function () {
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
+  if (!file) {
+    alert("请选择图片文件");
+    return;
+  }
 
-async function startOCR() {
-  const fileInput = document.getElementById("imageInput");
-  if (!fileInput.files[0]) return alert("请先选择图片");
+  try {
+    // 获取百度 Access Token（通过自己服务器中转，避免 CORS）
+    const tokenRes = await fetch("/api/baidu-token");
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
 
-  const reader = new FileReader();
-  reader.onload = async function () {
-    const base64 = reader.result.split(",")[1];
-    const token = await getAccessToken();
-    const res = await fetch("https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=" + token, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "image=" + encodeURIComponent(base64)
-    });
-    const data = await res.json();
-    const words = data.words_result.map(w => w.words).join("\\n");
-    parseFields(words);
-  };
-  reader.readAsDataURL(fileInput.files[0]);
-}
+    // 将图片转为 base64
+    const reader = new FileReader();
+    reader.onload = async function () {
+      const base64Img = reader.result.split(",")[1];
 
-function parseFields(text) {
-  document.getElementById("formSection").style.display = "block";
-  const storeMatch = text.match(/MR\\.\\s?.*/i);
-  const amountMatch = text.match(/RM\\s?([\\d.]+)/i);
-  const dateMatch = text.match(/\d{2}\/\d{2}\/\d{4}/);
-  document.getElementById("store").value = storeMatch ? storeMatch[0] : "";
-  document.getElementById("amount").value = amountMatch ? amountMatch[1] : "";
-  document.getElementById("datetime").value = dateMatch ? dateMatch[0] : new Date().toISOString().slice(0, 10);
-}
+      // 调用百度 OCR 接口
+      const ocrRes = await fetch(
+        `https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=${accessToken}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: `image=${encodeURIComponent(base64Img)}`
+        }
+      );
 
-function saveRecord() {
-  const r = {
-    store: document.getElementById("store").value,
-    amount: parseFloat(document.getElementById("amount").value),
-    datetime: document.getElementById("datetime").value,
-    category: document.getElementById("category").value
-  };
-  const list = JSON.parse(localStorage.getItem("records") || "[]");
-  list.push(r);
-  localStorage.setItem("records", JSON.stringify(list));
-  loadRecords();
-}
+      const ocrData = await ocrRes.json();
+      const text = ocrData.words_result.map(item => item.words).join("\n");
+      console.log("OCR识别结果：", text);
 
-function loadRecords() {
-  const records = JSON.parse(localStorage.getItem("records") || "[]");
-  const tbody = document.querySelector("#recordTable tbody");
-  tbody.innerHTML = "";
-  records.forEach(r => {
-    tbody.innerHTML += `<tr><td>${r.store}</td><td>${r.amount.toFixed(2)}</td><td>${r.datetime}</td><td>${r.category}</td></tr>`;
-  });
-}
+      // 简单提取信息
+      const storeMatch = text.match(/(便利店|超市|7-11|FamilyMart|KK|99 Speedmart|myNEWS)/i);
+      const amountMatch = text.match(/(?:RM|MYR)?\s?(\d+\.\d{2})/);
+      const dateMatch = text.match(/\d{2}\/\d{2}\/\d{4}/);
 
-window.onload = loadRecords;
+      const store = storeMatch ? storeMatch[0] : "未知";
+      const amount = amountMatch ? amountMatch[1] : "未识别";
+      const date = dateMatch ? dateMatch[0] : "未识别";
+
+      // 添加到历史记录表格
+      const table = document.getElementById("historyTable");
+      const row = table.insertRow(-1);
+      row.insertCell(0).innerText = store;
+      row.insertCell(1).innerText = amount;
+      row.insertCell(2).innerText = date;
+      row.insertCell(3).innerText = "其他";
+    };
+
+    reader.readAsDataURL(file);
+  } catch (error) {
+    console.error("识别失败", error);
+    alert("识别失败，请检查控制台获取详细信息");
+  }
+});
