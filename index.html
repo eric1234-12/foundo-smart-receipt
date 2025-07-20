@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FOUNDO SMART 收据识别</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f7f7f7; }
+    header { background: #ff6600; color: white; padding: 14px; text-align: center; font-weight: bold; font-size: 18px; }
+    .container { padding: 16px; }
+    input[type="file"], input, select { width: 100%; margin-bottom: 12px; padding: 8px; }
+    button { padding: 10px 16px; background: #ff6600; color: white; border: none; border-radius: 5px; font-size: 16px; width: 100%; }
+    table { width: 100%; margin-top: 16px; background: white; border-collapse: collapse; }
+    th, td { border: 1px solid #eee; padding: 6px; font-size: 14px; }
+    th { background: #f0f0f0; }
+    footer { text-align: center; font-size: 12px; color: #888; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <header>FOUNDO SMART 收据识别</header>
+  <div class="container">
+    <input type="file" id="imageInput" accept="image/*" />
+    <button onclick="startOCR()">上传并识别</button>
+    <div id="formSection" style="display:none;">
+      <h3>识别结果确认</h3>
+      <input id="store" placeholder="店名" />
+      <input id="amount" type="number" placeholder="金额 RM" />
+      <input id="datetime" placeholder="日期 YYYY/MM/DD" />
+      <select id="category">
+        <option>支出</option><option>销售</option>
+      </select>
+      <button onclick="saveRecord()">保存记录</button>
+    </div>
+    <h3>历史记录</h3>
+    <table id="recordTable">
+      <thead><tr><th>店名</th><th>金额</th><th>日期</th><th>分类</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <footer>© 2025 FOUNDO SMART</footer>
+  <script src="script.js"></script>
+</body>
+</html>
