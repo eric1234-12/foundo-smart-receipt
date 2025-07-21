@@ -4,8 +4,8 @@ export default async function handler(req, res) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "client_credentials",
-      client_id: "你的API_KEY",
-      client_secret: "你的SECRET_KEY",
+      client_id: "Rn1ouMVSbEqJDNxU5vyqJmGU",
+      client_secret: "P9MXXYkTh2f3RIOjp5BMNAG1EQXUufaj",
     }),
   });
 
