@@ -96,7 +96,7 @@ async function syncToGoogleSheet(parsedLines) {
   });
 
   try {
-    await fetch("https://script.google.com/macros/s/你的脚本ID/exec", {
+    await fetch("https://script.google.com/macros/s/AKfycby2KVNSV2xgt_Pm4cH0l5Ou0U_qTtD2sPegau-IPacxrWU1256-TBn_ssOfYC3H1lot/exec", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
