@@ -6,7 +6,6 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     return;
   }
 
-  // 获取 access_token
   let accessToken;
   try {
     const tokenRes = await fetch("/api/baidu-token");
@@ -19,14 +18,12 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     return;
   }
 
-  // 读取图片文件为 base64
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
-    const base64Image = reader.result.split(",")[1]; // 去掉前缀
+    const base64Image = reader.result.split(",")[1];
     try {
-      // 调用百度 VAT Invoice OCR 接口
-const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general?access_token=${accessToken}`, {
+      const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general?access_token=${accessToken}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
@@ -36,82 +33,54 @@ const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general?acc
 
       const ocrData = await ocrRes.json();
       if (ocrData.words_result) {
-        displayResult(ocrData.words_result);
-        // 👉 你可以在这里调用你的 Google Sheet 同步函数
-      await syncToGoogleSheet(ocrData.words_result, base64Image);
+        await syncToGoogleSheet(ocrData.words_result, base64Image);
+        const dateText = extractDate(ocrData.words_result) || "未知日期";
+        document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${dateText}`;
       } else {
         alert("识别失败，请检查票据是否清晰！");
-        console.error(ocrData);
       }
     } catch (err) {
-      alert("识别接口请求失败！");
+      alert("识别失败！");
       console.error(err);
     }
   };
 });
 
-// 展示结果到页面
-function displayResult(data) {
-  const container = document.getElementById('resultContainer');
-  container.innerHTML = '';
-
-  const lines = data.map(item => item.words);  // ✅ 修正这里
-
-  lines.forEach((line, index) => {
-    const [title, content] = line.includes(':') ? line.split(':', 2) : [line, ''];
-
-    const row = document.createElement('div');
-    row.className = 'result-row';
-
-    const titleEl = document.createElement('div');
-    titleEl.className = 'result-title';
-    titleEl.textContent = title.trim();
-
-    const contentEl = document.createElement('div');
-    contentEl.className = 'result-content';
-    contentEl.textContent = content.trim();
-
-    row.appendChild(titleEl);
-    row.appendChild(contentEl);
-    container.appendChild(row);
-  });
+function extractDate(lines) {
+  for (const item of lines) {
+    const match = item.words.match(/\d{2}\/\d{2}\/\d{2,4}/);
+    if (match) return match[0];
+  }
+  return "";
 }
 
-async function syncToGoogleSheet(parsedLines, base64Image) {
-  const lines = parsedLines.map(item => item.words);
+async function syncToGoogleSheet(ocrLines, base64Image) {
+  const lines = ocrLines.map(item => item.words);
+  let amount = "", date = "", raw = lines.join("\n");
 
-  let store = "", amount = "", date = "", category = "", raw = "";
-
-  lines.forEach(line => {
-    raw += line + "\n";
-    if (line.includes("店名") || line.toLowerCase().includes("store")) {
-      store = line.split(/[:：]/)[1]?.trim() || store;
+  for (const line of lines) {
+    if (!amount && line.match(/total|subtotal|rm|myr/i)) {
+      const match = line.match(/\d+[.,]?\d{0,2}/);
+      if (match) amount = match[0];
     }
-    if (line.match(/RM|MYR|金额/)) {
-      amount = line.split(/[:：]/)[1]?.trim() || amount;
-    }
-    if (line.match(/\d{2}\/\d{2}\/\d{2,4}/)) {
+    if (!date && line.match(/\d{2}\/\d{2}\/\d{2,4}/)) {
       date = line.match(/\d{2}\/\d{2}\/\d{2,4}/)[0];
     }
-  });
-
-  try {
-    await fetch("/api/gsheet", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        store,
-        amount,
-        date,
-        category,
-        raw,
-        imageBase64: base64Image
-      })
-    });
-    console.log("✅ 成功同步到 Google Sheet（含图片）");
-  } catch (err) {
-    console.error("❌ 同步失败", err);
   }
+
+  const note = prompt("请输入备注：") || "";
+  const category = prompt("请输入类别（supermarkt, HD, HD Fruit, HD Milk, HD MILK2, OTHERS）：") || "OTHERS";
+
+  await fetch("/api/gsheet", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      date,
+      amount,
+      category,
+      note,
+      raw,
+      imageBase64
+    })
+  });
 }
-
-
