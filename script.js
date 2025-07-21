@@ -34,62 +34,58 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
       });
 
       const ocrData = await ocrRes.json();
-      if (ocrData.words_result) {
-        const dateText = extractDate(ocrData.words_result) || "未知日期";
-
-        // 同步到 Google Sheet（包含图片和用户填写的信息）
-        await syncToGoogleSheet(ocrData.words_result, base64Image);
-
-        // 页面仅展示成功 + 发票日期
-        document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${dateText}`;
-      } else {
+      if (!ocrData.words_result) {
         alert("识别失败，请检查票据是否清晰！");
-        console.error(ocrData);
+        return;
       }
+
+      // 提取金额与日期
+      const lines = ocrData.words_result.map(item => item.words);
+      let amount = "", date = "";
+
+      for (const line of lines) {
+        if (!amount && line.match(/total|subtotal|rm|myr/i)) {
+          const match = line.match(/\d+[.,]?\d{0,2}/);
+          if (match) amount = match[0];
+        }
+        if (!date && line.match(/\d{2}\/\d{2}\/\d{2,4}/)) {
+          date = line.match(/\d{2}\/\d{2}\/\d{2,4}/)[0];
+        }
+      }
+
+      if (!amount || !date) {
+        alert("识别不到金额或日期，请上传清晰的票据！");
+        return;
+      }
+
+      // 用户确认识别结果
+      const confirmText = `系统识别到的信息如下：\n\n🧾 金额: ${amount}\n📅 日期: ${date}\n\n是否确认并上传？`;
+      const confirmed = confirm(confirmText);
+      if (!confirmed) return;
+
+      // 继续收集其他信息
+      const note = prompt("请输入备注：") || "";
+      const category = prompt("请输入类别（supermarkt, HD, HD Fruit, HD Milk, HD MILK2, OTHERS）：") || "OTHERS";
+
+      // 上传到 Google Sheet
+      await fetch("/api/gsheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          amount,
+          category,
+          note,
+          raw: lines.join("\n"),
+          imageBase64
+        })
+      });
+
+      // 显示成功信息
+      document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${date}`;
     } catch (err) {
       alert("识别接口请求失败！");
       console.error(err);
     }
   };
 });
-
-// 提取消费日期
-function extractDate(lines) {
-  for (const item of lines) {
-    const match = item.words.match(/\d{2}\/\d{2}\/\d{2,4}/);
-    if (match) return match[0];
-  }
-  return "";
-}
-
-// 提取金额 + 日期 + 收集备注 + 同步 Google Sheet
-async function syncToGoogleSheet(ocrLines, imageBase64) {
-  const lines = ocrLines.map(item => item.words);
-  let amount = "", date = "", raw = lines.join("\n");
-
-  for (const line of lines) {
-    if (!amount && line.match(/total|subtotal|rm|myr/i)) {
-      const match = line.match(/\d+[.,]?\d{0,2}/);
-      if (match) amount = match[0];
-    }
-    if (!date && line.match(/\d{2}\/\d{2}\/\d{2,4}/)) {
-      date = line.match(/\d{2}\/\d{2}\/\d{2,4}/)[0];
-    }
-  }
-
-  const note = prompt("请输入备注：") || "";
-  const category = prompt("请输入类别（supermarkt, HD, HD Fruit, HD Milk, HD MILK2, OTHERS）：") || "OTHERS";
-
-  await fetch("/api/gsheet", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      date,
-      amount,
-      category,
-      note,
-      raw,
-      imageBase64
-    })
-  });
-}
