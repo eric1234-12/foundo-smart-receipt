@@ -16,7 +16,7 @@ window.addEventListener("DOMContentLoaded", function () {
 
     try {
       // 获取 Access Token（你需要自己在服务器端处理 CORS）
-      const tokenRes = await fetch("https://foundo-smart-api.vercel.app/token");
+      const tokenRes = await fetch("https://foundo-smart-api.vercel.app/api/baidu-token");
       const tokenData = await tokenRes.json();
       const accessToken = tokenData.access_token;
 
