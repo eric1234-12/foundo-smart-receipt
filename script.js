@@ -24,7 +24,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
-    const base64Image = reader.result.split(",")[1];
+    const base64Image = reader.result.split(",")[1]; // 👈 这里作用域 OK
     try {
       const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general?access_token=${accessToken}`, {
         method: "POST",
@@ -41,7 +41,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
       }
 
       const lines = ocrData.words_result.map(item => item.words);
-      let amount = "", date = "";
+      let amount = "", date = "", invoice = "";
 
       for (const line of lines) {
         if (!amount && line.match(/total|subtotal|rm|myr/i)) {
@@ -51,6 +51,10 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
         if (!date && line.match(/\d{2}\/\d{2}\/\d{2,4}/)) {
           date = line.match(/\d{2}\/\d{2}\/\d{2,4}/)[0];
         }
+        if (!invoice && line.toLowerCase().match(/inv|invoice\s*(no)?[:：]?\s*\w+/i)) {
+          const match = line.match(/(?:inv|invoice)[\s:：-]*([A-Z0-9\-]+)/i);
+          if (match) invoice = match[1];
+        }
       }
 
       if (!amount || !date) {
@@ -59,14 +63,16 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
       }
 
       // 储存待上传数据
-     pendingUploadData = {
-  amount,
-  date,
-  imageBase64: base64Image
-};
+      pendingUploadData = {
+        amount,
+        date,
+        invoice,
+        imageBase64: base64Image
+      };
 
       // 显示自定义弹窗
-      document.getElementById("modalText").textContent = `系统识别如下内容:\n📅 日期: ${date}\n💰 金额: ${amount}`;
+      document.getElementById("modalText").textContent = 
+        `系统识别如下内容:\n📅 日期: ${date}\n💰 金额: ${amount}${invoice ? `\n🧾 发票号: ${invoice}` : ""}`;
       document.getElementById("confirmModal").style.display = "block";
 
     } catch (err) {
