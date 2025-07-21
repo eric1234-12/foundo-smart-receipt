@@ -26,7 +26,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     const base64Image = reader.result.split(",")[1]; // 去掉前缀
     try {
       // 调用百度 VAT Invoice OCR 接口
-      const ocrRes = await fetch(` https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=${accessToken}`, {
+const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general?access_token=${accessToken}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
