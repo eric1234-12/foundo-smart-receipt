@@ -59,12 +59,12 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
       }
 
       // 储存待上传数据
-      pendingUploadData = {
-        amount,
-        date,
-        imageBase64,
-        raw: lines.join("\n")
-      };
+     pendingUploadData = {
+  amount,
+  date,
+  imageBase64: base64Image,
+  raw: lines.join("\n")
+};
 
       // 显示自定义弹窗
       document.getElementById("modalText").textContent = `系统识别如下内容:\n📅 日期: ${date}\n💰 金额: ${amount}`;
