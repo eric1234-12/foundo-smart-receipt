@@ -38,7 +38,7 @@ const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general?acc
       if (ocrData.words_result) {
         displayResult(ocrData.words_result);
         // 👉 你可以在这里调用你的 Google Sheet 同步函数
-        // await syncToGoogleSheet(ocrData.words_result);
+      await syncToGoogleSheet(ocrData.words_result);
       } else {
         alert("识别失败，请检查票据是否清晰！");
         console.error(ocrData);
