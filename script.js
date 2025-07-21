@@ -1,59 +1,83 @@
-document.getElementById("uploadBtn").addEventListener("click", async function () {
+window.addEventListener("DOMContentLoaded", function () {
+  const uploadBtn = document.getElementById("uploadBtn");
   const fileInput = document.getElementById("fileInput");
-  const file = fileInput.files[0];
-  if (!file) {
-    alert("请选择图片文件");
+
+  if (!uploadBtn || !fileInput) {
+    console.error("找不到按钮或文件输入框，请检查 HTML 是否包含 id=uploadBtn 和 id=fileInput");
     return;
   }
 
-  try {
-    // 获取百度 Access Token（通过自己服务器中转，避免 CORS）
-    const tokenRes = await fetch("/api/baidu-token");
-    const tokenData = await tokenRes.json();
-    const accessToken = tokenData.access_token;
+  uploadBtn.addEventListener("click", async function () {
+    const file = fileInput.files[0];
+    if (!file) {
+      alert("请先选择一张收据图片");
+      return;
+    }
 
-    // 将图片转为 base64
-    const reader = new FileReader();
-    reader.onload = async function () {
-      const base64Img = reader.result.split(",")[1];
+    try {
+      // 获取 Access Token（你需要自己在服务器端处理 CORS）
+      const tokenRes = await fetch("https://foundo-smart-api.vercel.app/token");
+      const tokenData = await tokenRes.json();
+      const accessToken = tokenData.access_token;
 
-      // 调用百度 OCR 接口
-      const ocrRes = await fetch(
-        `https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=${accessToken}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: `image=${encodeURIComponent(base64Img)}`
-        }
-      );
+      if (!accessToken) {
+        throw new Error("获取 access_token 失败");
+      }
+
+      // 转成 base64
+      const base64 = await toBase64(file);
+
+      // OCR 识别
+      const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=${accessToken}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `image=${encodeURIComponent(base64)}`,
+      });
 
       const ocrData = await ocrRes.json();
-      const text = ocrData.words_result.map(item => item.words).join("\n");
-      console.log("OCR识别结果：", text);
+      const words = ocrData.words_result.map(w => w.words).join("\n");
 
-      // 简单提取信息
-      const storeMatch = text.match(/(便利店|超市|7-11|FamilyMart|KK|99 Speedmart|myNEWS)/i);
-      const amountMatch = text.match(/(?:RM|MYR)?\s?(\d+\.\d{2})/);
-      const dateMatch = text.match(/\d{2}\/\d{2}\/\d{4}/);
+      console.log("识别结果：", words);
 
-      const store = storeMatch ? storeMatch[0] : "未知";
-      const amount = amountMatch ? amountMatch[1] : "未识别";
-      const date = dateMatch ? dateMatch[0] : "未识别";
+      // 简单提取店名、金额、日期
+      const storeMatch = words.match(/店名[:：]?\s*(.+)/);
+      const amountMatch = words.match(/金额[:：]?\s*(\d+(\.\d+)?)/);
+      const dateMatch = words.match(/\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}/);
 
-      // 添加到历史记录表格
-      const table = document.getElementById("historyTable");
-      const row = table.insertRow(-1);
-      row.insertCell(0).innerText = store;
-      row.insertCell(1).innerText = amount;
-      row.insertCell(2).innerText = date;
-      row.insertCell(3).innerText = "其他";
-    };
+      const store = storeMatch ? storeMatch[1] : "未知店名";
+      const amount = amountMatch ? amountMatch[1] : "未知金额";
+      const date = dateMatch ? dateMatch[0] : "未知日期";
 
-    reader.readAsDataURL(file);
-  } catch (error) {
-    console.error("识别失败", error);
-    alert("识别失败，请检查控制台获取详细信息");
+      addRow(store, amount, date, "未分类");
+    } catch (err) {
+      console.error("识别出错：", err);
+      alert("识别失败，请检查网络或稍后重试");
+    }
+  });
+
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result.split(",")[1];
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function addRow(store, amount, date, category) {
+    const table = document.querySelector("table");
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${store}</td>
+      <td>${amount}</td>
+      <td>${date}</td>
+      <td>${category}</td>
+    `;
+    table.appendChild(row);
   }
 });
