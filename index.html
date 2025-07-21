@@ -51,11 +51,21 @@
     #confirmBtn:hover {
       background-color: #cc5200;
     }
+    #cancelBtn {
+      background-color: #888;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    #cancelBtn:hover {
+      background-color: #666;
+    }
   </style>
 </head>
 <body>
   <h1>FOUNDO SMART 收据识别</h1>
-  <input type="file" id="fileInput" />
+  <input type="file" id="fileInput" accept="image/*" />
   <button id="uploadBtn">上传并识别</button>
 
   <div id="resultContainer"></div>
@@ -75,7 +85,7 @@
       </select>
     </label><br><br>
     <button id="confirmBtn">确认上传</button>
-    <button onclick="document.getElementById('confirmModal').style.display='none'">取消</button>
+    <button id="cancelBtn" onclick="document.getElementById('confirmModal').style.display='none'">取消</button>
   </div>
 
   <script src="script.js"></script>
