@@ -24,7 +24,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
-    const base64Image = reader.result.split(",")[1]; // 👈 这里作用域 OK
+    const base64Image = reader.result.split(",")[1];
     try {
       const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general?access_token=${accessToken}`, {
         method: "POST",
@@ -41,24 +41,16 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
       }
 
       const lines = ocrData.words_result.map(item => item.words);
-      let amount = "", date = "", invoice = "";
+      const ocrText = lines.join("\n");
 
-      for (const line of lines) {
-        if (!amount && line.match(/total|subtotal|rm|myr/i)) {
-          const match = line.match(/\d+[.,]?\d{0,2}/);
-          if (match) amount = match[0];
-        }
-        if (!date && line.match(/\d{2}\/\d{2}\/\d{2,4}/)) {
-          date = line.match(/\d{2}\/\d{2}\/\d{2,4}/)[0];
-        }
-      
-        if (!invoice && line.toLowerCase().match(/invoice\s*no|inv\s*no|invoice|inv/i)) {
-  const match = line.match(/(?:invoice|inv)\s*(?:no)?\s*[:：\-]?\s*([A-Z0-9\-]+)/i);
-  if (match && match[1]) {
-    invoice = match[1].toUpperCase(); // 可选：转为大写标准格式
-  }
-}
-      }
+      // 使用 ChatGPT API 提取字段
+      const extractRes = await fetch("/api/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ocrText })
+      });
+
+      const { date, amount, invoice } = await extractRes.json();
 
       if (!amount || !date) {
         alert("识别不到金额或日期，请上传清晰的票据！");
