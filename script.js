@@ -6,6 +6,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     return;
   }
 
+  // 获取百度 access_token
   let accessToken;
   try {
     const tokenRes = await fetch("/api/baidu-token");
@@ -18,6 +19,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     return;
   }
 
+  // 将图片读为 base64
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
@@ -33,19 +35,25 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
 
       const ocrData = await ocrRes.json();
       if (ocrData.words_result) {
-        await syncToGoogleSheet(ocrData.words_result, base64Image);
         const dateText = extractDate(ocrData.words_result) || "未知日期";
+
+        // 同步到 Google Sheet（包含图片和用户填写的信息）
+        await syncToGoogleSheet(ocrData.words_result, base64Image);
+
+        // 页面仅展示成功 + 发票日期
         document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${dateText}`;
       } else {
         alert("识别失败，请检查票据是否清晰！");
+        console.error(ocrData);
       }
     } catch (err) {
-      alert("识别失败！");
+      alert("识别接口请求失败！");
       console.error(err);
     }
   };
 });
 
+// 提取消费日期
 function extractDate(lines) {
   for (const item of lines) {
     const match = item.words.match(/\d{2}\/\d{2}\/\d{2,4}/);
@@ -54,7 +62,8 @@ function extractDate(lines) {
   return "";
 }
 
-async function syncToGoogleSheet(ocrLines, base64Image) {
+// 提取金额 + 日期 + 收集备注 + 同步 Google Sheet
+async function syncToGoogleSheet(ocrLines, imageBase64) {
   const lines = ocrLines.map(item => item.words);
   let amount = "", date = "", raw = lines.join("\n");
 
