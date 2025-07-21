@@ -1,3 +1,5 @@
+let pendingUploadData = null;
+
 document.getElementById("uploadBtn").addEventListener("click", async () => {
   const fileInput = document.getElementById("fileInput");
   const file = fileInput.files[0];
@@ -19,7 +21,6 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     return;
   }
 
-  // 将图片读为 base64
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
@@ -39,7 +40,6 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
         return;
       }
 
-      // 提取金额与日期
       const lines = ocrData.words_result.map(item => item.words);
       let amount = "", date = "";
 
@@ -58,34 +58,49 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
         return;
       }
 
-      // 用户确认识别结果
-      const confirmText = `系统识别到的信息如下：\n\n🧾 金额: ${amount}\n📅 日期: ${date}\n\n是否确认并上传？`;
-      const confirmed = confirm(confirmText);
-      if (!confirmed) return;
+      // 储存待上传数据
+      pendingUploadData = {
+        amount,
+        date,
+        imageBase64,
+        raw: lines.join("\n")
+      };
 
-      // 继续收集其他信息
-      const note = prompt("请输入备注：") || "";
-      const category = prompt("请输入类别（supermarkt, HD, HD Fruit, HD Milk, HD MILK2, OTHERS）：") || "OTHERS";
+      // 显示自定义弹窗
+      document.getElementById("modalText").textContent = `系统识别如下内容:\n📅 日期: ${date}\n💰 金额: ${amount}`;
+      document.getElementById("confirmModal").style.display = "block";
 
-      // 上传到 Google Sheet
-      await fetch("/api/gsheet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date,
-          amount,
-          category,
-          note,
-          raw: lines.join("\n"),
-          imageBase64
-        })
-      });
-
-      // 显示成功信息
-      document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${date}`;
     } catch (err) {
       alert("识别接口请求失败！");
       console.error(err);
     }
   };
+});
+
+// 点击确认上传
+document.getElementById("confirmBtn").addEventListener("click", async () => {
+  if (!pendingUploadData) return;
+
+  const note = document.getElementById("noteInput").value || "";
+  const category = document.getElementById("categorySelect").value;
+
+  try {
+    await fetch("/api/gsheet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...pendingUploadData,
+        note,
+        category
+      })
+    });
+
+    document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${pendingUploadData.date}`;
+    document.getElementById("confirmModal").style.display = "none";
+    pendingUploadData = null;
+
+  } catch (err) {
+    alert("同步 Google Sheet 失败");
+    console.error(err);
+  }
 });
