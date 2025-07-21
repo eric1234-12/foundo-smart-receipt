@@ -96,7 +96,7 @@ async function syncToGoogleSheet(parsedLines) {
   });
 
   try {
-    await fetch("https://script.google.com/macros/s/AKfycbykw8Fzv-UOL5oDVImThTeQHUEXgXk7A1uCg4BmGBUQdYyd5cL6GkBpjELRwYbGaXXd/exec", {
+   await fetch("/api/gsheet", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
