@@ -51,14 +51,29 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
 });
 
 // 展示结果到页面
-function displayResult(wordsResult) {
-  const resultDiv = document.getElementById("resultBox");
-  resultDiv.innerHTML = "<h3>识别结果：</h3>";
-  const list = document.createElement("ul");
-  for (const key in wordsResult) {
-    const li = document.createElement("li");
-    li.innerHTML = `<strong>${key}:</strong> ${wordsResult[key].words}`;
-    list.appendChild(li);
-  }
-  resultDiv.appendChild(list);
+function displayResult(data) {
+  const container = document.getElementById('resultContainer');
+  container.innerHTML = '';
+
+  // 假设识别结果是 text 多行
+  const lines = data.words_result.map(item => item.words);
+
+  lines.forEach((line, index) => {
+    const [title, content] = line.includes(':') ? line.split(':', 2) : [line, ''];
+    
+    const row = document.createElement('div');
+    row.className = 'result-row';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'result-title';
+    titleEl.textContent = title.trim();
+
+    const contentEl = document.createElement('div');
+    contentEl.className = 'result-content';
+    contentEl.textContent = content.trim();
+
+    row.appendChild(titleEl);
+    row.appendChild(contentEl);
+    container.appendChild(row);
+  });
 }
