@@ -1,28 +1,51 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FOUNDO SMART 收据识别</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; }
-    table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background: #f60; color: white; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+    }
+    h1 {
+      color: #e65c00;
+    }
+    #uploadBtn {
+      background: #e65c00;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      margin-left: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #resultBox {
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+      max-width: 600px;
+    }
+    #resultBox ul {
+      list-style: none;
+      padding: 0;
+    }
+    #resultBox li {
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <h2>FOUNDO SMART 收据识别</h2>
-  
-  <!-- 加上这两个 id！ -->
-  <input type="file" id="fileInput">
+  <h1>FOUNDO SMART 收据识别</h1>
+  <input type="file" id="fileInput" />
   <button id="uploadBtn">上传并识别</button>
 
-  <h3>历史记录</h3>
-  <table>
-    <tr>
-    </tr>
-  </table>
-<div id="resultBox"></div>
+  <div id="resultBox"></div>
+
   <script src="script.js"></script>
 </body>
 </html>
