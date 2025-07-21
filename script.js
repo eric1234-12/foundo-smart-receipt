@@ -77,3 +77,39 @@ function displayResult(data) {
   });
 }
 
+async function syncToGoogleSheet(parsedLines) {
+  // 你可以在这里提取一些关键字段
+  let store = "", amount = "", date = "", category = "", raw = "";
+
+  parsedLines.forEach(line => {
+    raw += line + "\n";
+    if (line.includes("店名") || line.toLowerCase().includes("store")) {
+      store = line.split(/[:：]/)[1]?.trim() || store;
+    }
+    if (line.match(/RM|MYR|金额/)) {
+      amount = line.split(/[:：]/)[1]?.trim() || amount;
+    }
+    if (line.match(/\d{4}[-/年]\d{1,2}[-/月]\d{1,2}/)) {
+      date = line.match(/\d{4}[-/年]\d{1,2}[-/月]\d{1,2}/)[0];
+    }
+  });
+
+  try {
+    await fetch("https://script.google.com/macros/s/AKfycbzp6YOZKNiAVhXmldicCHI3C-kkpgGpr_liY52eFaoxpHwmeGgwLIYXIaZ4yICrh1Y/exec", {  // 替换为你自己的 URL
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        store,
+        amount,
+        date,
+        category,
+        raw
+      })
+    });
+    console.log("✅ 成功同步到 Google Sheet");
+  } catch (err) {
+    console.error("❌ 同步到 Google Sheet 失败", err);
+  }
+}
