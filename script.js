@@ -31,16 +31,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  function displayDynamicResult(data) {
-    resultBox.innerHTML = "<h3>识别结果：</h3>";
-    const list = document.createElement("ul");
+function displayDynamicResult(data) {
+  resultBox.innerHTML = "<h3>识别结果：</h3>";
+  const list = document.createElement("ul");
 
-    Object.entries(data).forEach(([key, value]) => {
-      const item = document.createElement("li");
-      item.innerHTML = `<strong>${key}：</strong> ${value}`;
-      list.appendChild(item);
-    });
+  Object.entries(data).forEach(([key, value]) => {
+    const item = document.createElement("li");
+    item.innerHTML = `<strong>${key}：</strong> ${value}`;
+    list.appendChild(item);
+  });
 
-    resultBox.appendChild(list);
-  }
+  resultBox.appendChild(list);
+}
 });
