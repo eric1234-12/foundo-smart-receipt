@@ -51,10 +51,13 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
         if (!date && line.match(/\d{2}\/\d{2}\/\d{2,4}/)) {
           date = line.match(/\d{2}\/\d{2}\/\d{2,4}/)[0];
         }
-        if (!invoice && line.toLowerCase().match(/inv|invoice\s*(no)?[:：]?\s*\w+/i)) {
-          const match = line.match(/(?:inv|invoice)[\s:：-]*([A-Z0-9\-]+)/i);
-          if (match) invoice = match[1];
-        }
+      
+        if (!invoice && line.toLowerCase().match(/invoice\s*no|inv\s*no|invoice|inv/i)) {
+  const match = line.match(/(?:invoice|inv)\s*(?:no)?\s*[:：\-]?\s*([A-Z0-9\-]+)/i);
+  if (match && match[1]) {
+    invoice = match[1].toUpperCase(); // 可选：转为大写标准格式
+  }
+}
       }
 
       if (!amount || !date) {
