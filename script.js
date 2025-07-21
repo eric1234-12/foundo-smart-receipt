@@ -55,12 +55,11 @@ function displayResult(data) {
   const container = document.getElementById('resultContainer');
   container.innerHTML = '';
 
-  // 假设识别结果是 text 多行
-  const lines = data.words_result.map(item => item.words);
+  const lines = data.map(item => item.words);  // ✅ 修正这里
 
   lines.forEach((line, index) => {
     const [title, content] = line.includes(':') ? line.split(':', 2) : [line, ''];
-    
+
     const row = document.createElement('div');
     row.className = 'result-row';
 
@@ -77,3 +76,4 @@ function displayResult(data) {
     container.appendChild(row);
   });
 }
+
