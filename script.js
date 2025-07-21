@@ -62,8 +62,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
      pendingUploadData = {
   amount,
   date,
-  imageBase64: base64Image,
-  raw: lines.join("\n")
+  imageBase64: base64Image
 };
 
       // 显示自定义弹窗
