@@ -77,8 +77,8 @@ function displayResult(data) {
   });
 }
 
-async function syncToGoogleSheet(parsedLines) {
-  const lines = parsedLines.map(item => item.words);  // ✅ 确保是字符串数组
+async function syncToGoogleSheet(parsedLines, base64Image) {
+  const lines = parsedLines.map(item => item.words);
 
   let store = "", amount = "", date = "", category = "", raw = "";
 
@@ -96,22 +96,22 @@ async function syncToGoogleSheet(parsedLines) {
   });
 
   try {
-   await fetch("/api/gsheet", {
+    await fetch("/api/gsheet", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         store,
         amount,
         date,
         category,
-        raw
+        raw,
+        imageBase64: base64Image
       })
     });
-    console.log("✅ 成功同步到 Google Sheet");
+    console.log("✅ 成功同步到 Google Sheet（含图片）");
   } catch (err) {
     console.error("❌ 同步失败", err);
   }
 }
+
 
