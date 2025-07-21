@@ -26,6 +26,31 @@
       font-size: 18px;
       color: green;
     }
+    #confirmModal {
+      display: none;
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      z-index: 9999;
+      width: 300px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    #confirmBtn {
+      background-color: #e65c00;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    #confirmBtn:hover {
+      background-color: #cc5200;
+    }
   </style>
 </head>
 <body>
@@ -35,24 +60,24 @@
 
   <div id="resultContainer"></div>
 
-  <script src="script.js"></script>
-  <!-- 自定义弹窗 -->
-<div id="confirmModal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#fff; border:1px solid #ccc; padding:20px; border-radius:8px; z-index:9999; width:300px;">
-  <p id="modalText"></p>
-  <label>备注：<input type="text" id="noteInput" style="width:100%;"/></label><br><br>
-  <label>类别：
-    <select id="categorySelect" style="width:100%;">
-      <option value="supermarkt">supermarkt</option>
-      <option value="HD">HD</option>
-      <option value="HD Fruit">HD Fruit</option>
-      <option value="HD Milk">HD Milk</option>
-      <option value="HD MILK2">HD MILK2</option>
-      <option value="OTHERS">OTHERS</option>
-    </select>
-  </label><br><br>
-  <button id="confirmBtn">确认上传</button>
-  <button onclick="document.getElementById('confirmModal').style.display='none'">取消</button>
-</div>
+  <!-- 弹窗 -->
+  <div id="confirmModal">
+    <p id="modalText"></p>
+    <label>备注：<input type="text" id="noteInput" style="width:100%;" /></label><br><br>
+    <label>类别：
+      <select id="categorySelect" style="width:100%;">
+        <option value="supermarkt">supermarkt</option>
+        <option value="HD">HD</option>
+        <option value="HD Fruit">HD Fruit</option>
+        <option value="HD Milk">HD Milk</option>
+        <option value="HD MILK2">HD MILK2</option>
+        <option value="OTHERS">OTHERS</option>
+      </select>
+    </label><br><br>
+    <button id="confirmBtn">确认上传</button>
+    <button onclick="document.getElementById('confirmModal').style.display='none'">取消</button>
+  </div>
 
+  <script src="script.js"></script>
 </body>
 </html>
