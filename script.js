@@ -78,10 +78,11 @@ function displayResult(data) {
 }
 
 async function syncToGoogleSheet(parsedLines) {
-  // 你可以在这里提取一些关键字段
+  const lines = parsedLines.map(item => item.words);  // ✅ 确保是字符串数组
+
   let store = "", amount = "", date = "", category = "", raw = "";
 
-  parsedLines.forEach(line => {
+  lines.forEach(line => {
     raw += line + "\n";
     if (line.includes("店名") || line.toLowerCase().includes("store")) {
       store = line.split(/[:：]/)[1]?.trim() || store;
@@ -89,13 +90,13 @@ async function syncToGoogleSheet(parsedLines) {
     if (line.match(/RM|MYR|金额/)) {
       amount = line.split(/[:：]/)[1]?.trim() || amount;
     }
-    if (line.match(/\d{4}[-/年]\d{1,2}[-/月]\d{1,2}/)) {
-      date = line.match(/\d{4}[-/年]\d{1,2}[-/月]\d{1,2}/)[0];
+    if (line.match(/\d{2}\/\d{2}\/\d{2,4}/)) {
+      date = line.match(/\d{2}\/\d{2}\/\d{2,4}/)[0];
     }
   });
 
   try {
-    await fetch("https://script.google.com/macros/s/AKfycbzp6YOZKNiAVhXmldicCHI3C-kkpgGpr_liY52eFaoxpHwmeGgwLIYXIaZ4yICrh1Y/exec", {  // 替换为你自己的 URL
+    await fetch("https://script.google.com/macros/s/你的脚本ID/exec", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -110,6 +111,7 @@ async function syncToGoogleSheet(parsedLines) {
     });
     console.log("✅ 成功同步到 Google Sheet");
   } catch (err) {
-    console.error("❌ 同步到 Google Sheet 失败", err);
+    console.error("❌ 同步失败", err);
   }
 }
+
