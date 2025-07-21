@@ -112,4 +112,3 @@ document.getElementById("confirmBtn").addEventListener("click", async () => {
     console.error(err);
   }
 });
-Logger.log(data);
