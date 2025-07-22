@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     const visionRes = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+     model: "gpt-4o",
       messages: [
         { role: "system", content: prompt },
         {
