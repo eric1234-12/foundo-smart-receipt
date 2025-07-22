@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     let imageUrl = '';
     if (imageBase64) {
       const driveUploadRes = await fetch(
-        'https://script.google.com/macros/s/AKfycbxCZn8KKNzv3C6dTTxuyOo_FV4Jmk3DAi8NI189sRXJ3Iq9fuFSaCzRuDGDHgevVaf5/exec',
+        'https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
     // 上传表格数据
     const sheetRes = await fetch(
-      'https://script.google.com/macros/s/AKfycbxCZn8KKNzv3C6dTTxuyOo_FV4Jmk3DAi8NI189sRXJ3Iq9fuFSaCzRuDGDHgevVaf5/exec',
+      'https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
