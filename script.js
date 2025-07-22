@@ -1,3 +1,4 @@
+// ✅ script.js (前端逻辑)
 let pendingUploadData = null;
 
 document.getElementById("uploadBtn").addEventListener("click", async () => {
@@ -8,76 +9,48 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     return;
   }
 
-  // 获取百度 access_token
-  let accessToken;
-  try {
-    const tokenRes = await fetch("/api/baidu-token");
-    const tokenData = await tokenRes.json();
-    accessToken = tokenData.access_token;
-    if (!accessToken) throw new Error("无法获取 access_token");
-  } catch (err) {
-    alert("获取百度 token 失败！");
-    console.error(err);
-    return;
-  }
-
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
     const base64Image = reader.result.split(",")[1];
+
     try {
-      const ocrRes = await fetch(`https://aip.baidubce.com/rest/2.0/ocr/v1/general?access_token=${accessToken}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: `image=${encodeURIComponent(base64Image)}`
-      });
-
-      const ocrData = await ocrRes.json();
-      if (!ocrData.words_result) {
-        alert("识别失败，请检查票据是否清晰！");
-        return;
-      }
-
-      const lines = ocrData.words_result.map(item => item.words);
-      const ocrText = lines.join("\n");
-
-      // 使用 ChatGPT API 提取字段
       const extractRes = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ocrText })
+        body: JSON.stringify({ imageBase64 })
       });
 
-      const { date, amount, invoice } = await extractRes.json();
+      const { date, amount, invoice, error } = await extractRes.json();
+
+      if (error) {
+        alert("识别失败: " + error);
+        return;
+      }
 
       if (!amount || !date) {
         alert("识别不到金额或日期，请上传清晰的票据！");
         return;
       }
 
-      // 储存待上传数据
       pendingUploadData = {
         amount,
         date,
         invoice,
-        imageBase64: base64Image
+        imageBase64
       };
 
-      // 显示自定义弹窗
-      document.getElementById("modalText").textContent = 
+      document.getElementById("modalText").textContent =
         `系统识别如下内容:\n📅 日期: ${date}\n💰 金额: ${amount}${invoice ? `\n🧾 发票号: ${invoice}` : ""}`;
       document.getElementById("confirmModal").style.display = "block";
 
     } catch (err) {
-      alert("识别接口请求失败！");
+      alert("提取字段失败！");
       console.error(err);
     }
   };
 });
 
-// 点击确认上传
 document.getElementById("confirmBtn").addEventListener("click", async () => {
   if (!pendingUploadData) return;
 
