@@ -1,4 +1,3 @@
-// ✅ script.js (前端逻辑)
 let pendingUploadData = null;
 
 document.getElementById("uploadBtn").addEventListener("click", async () => {
@@ -12,40 +11,37 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
-    const base64Image = reader.result.split(",")[1];
+    const base64Image = reader.result.split(",")[1]; // 👈 正确声明在作用域内
 
     try {
       const extractRes = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64 })
+        body: JSON.stringify({ imageBase64: base64Image }) // 👈 正确传参
       });
 
-      const { date, amount, invoice, error } = await extractRes.json();
-
-      if (error) {
-        alert("识别失败: " + error);
-        return;
-      }
+      const { date, amount, invoice } = await extractRes.json();
 
       if (!amount || !date) {
         alert("识别不到金额或日期，请上传清晰的票据！");
         return;
       }
 
+      // 储存待上传数据
       pendingUploadData = {
         amount,
         date,
         invoice,
-        imageBase64
+        imageBase64: base64Image
       };
 
-      document.getElementById("modalText").textContent =
+      // 显示自定义弹窗
+      document.getElementById("modalText").textContent = 
         `系统识别如下内容:\n📅 日期: ${date}\n💰 金额: ${amount}${invoice ? `\n🧾 发票号: ${invoice}` : ""}`;
       document.getElementById("confirmModal").style.display = "block";
 
     } catch (err) {
-      alert("提取字段失败！");
+      alert("识别接口请求失败！");
       console.error(err);
     }
   };
