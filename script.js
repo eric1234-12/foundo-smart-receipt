@@ -1,5 +1,5 @@
 document.getElementById("uploadBtn").addEventListener("click", async () => {
-  const fileInput = document.getElementById("imageInput");
+  const fileInput = document.getElementById("fileInput");
   const file = fileInput.files[0];
 
   if (!file) {
