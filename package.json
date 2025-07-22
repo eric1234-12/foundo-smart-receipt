@@ -1,0 +1,13 @@
+{
+  "name": "foundo-smart-receipt",
+  "version": "1.0.0",
+  "description": "Smart receipt OCR with OpenAI & Google Sheets",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "openai": "^4.21.0"
+  }
+}
