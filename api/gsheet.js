@@ -1,80 +1,49 @@
-import { google } from "googleapis";
-
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
-  }
-
-  const {
-    invoice,
-    date,
-    note,
-    amount,
-    category1,
-    category2,
-    imageBase64
-  } = req.body;
-
-  const timestamp = new Date().toISOString();
+  if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    // 🧠 上传图片到 Google Drive
-    const imageBuffer = Buffer.from(imageBase64, "base64");
+    const { invoice, date, note, amount, brand, imageBase64 } = req.body;
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
-      scopes: ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/spreadsheets"]
-    });
+    // 上传图片到 Google Drive
+    let imageUrl = '';
+    if (imageBase64) {
+      const driveUploadRes = await fetch(
+        'https://script.google.com/macros/s/AKfycbxCZn8KKNzv3C6dTTxuyOo_FV4Jmk3DAi8NI189sRXJ3Iq9fuFSaCzRuDGDHgevVaf5/exec',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uploadOnly: true, imageBase64 })
+        }
+      );
+      const driveData = await driveUploadRes.json();
+      imageUrl = driveData.imageUrl || '';
+    }
 
-    const authClient = await auth.getClient();
-    const drive = google.drive({ version: "v3", auth: authClient });
-
-    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-
-    const fileMetadata = {
-      name: `${invoice || "receipt"}_${Date.now()}.jpg`,
-      parents: [folderId]
+    // 构造表格数据
+    const row = {
+      invoice: invoice || '',
+      date: date || '',
+      note: note || '',
+      rrAmount: brand === 'RR' ? amount : '',
+      aunteaAmount: brand === 'auntea jenny' ? amount : '',
+      timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" }),
+      imageUrl
     };
 
-    const media = {
-      mimeType: "image/jpeg",
-      body: Buffer.from(imageBuffer)
-    };
-
-    const uploaded = await drive.files.create({
-      resource: fileMetadata,
-      media: {
-        mimeType: "image/jpeg",
-        body: media.body
-      },
-      fields: "id"
-    });
-
-    const fileId = uploaded.data.id;
-    const imageUrl = `https://drive.google.com/uc?id=${fileId}`;
-
-    // 🧠 写入 Google Sheet
-    const sheets = google.sheets({ version: "v4", auth: authClient });
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-
-    const isRR = category1 === "RR";
-
-    const row = isRR
-      ? [invoice || "", date || "", note || "", "", amount || "", timestamp, imageUrl]
-      : [invoice || "", date || "", note || "", amount || "", "", timestamp, imageUrl];
-
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: "Sheet1!A1",
-      valueInputOption: "USER_ENTERED",
-      requestBody: {
-        values: [row]
+    // 上传表格数据
+    const sheetRes = await fetch(
+      'https://script.google.com/macros/s/AKfycbxCZn8KKNzv3C6dTTxuyOo_FV4Jmk3DAi8NI189sRXJ3Iq9fuFSaCzRuDGDHgevVaf5/exec',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appendOnly: true, row })
       }
-    });
+    );
 
-    res.status(200).json({ success: true, imageUrl });
+    const data = await sheetRes.json();
+    res.status(200).json(data);
+
   } catch (err) {
-    console.error("GSheet 上传失败:", err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ status: 'error', message: err.message });
   }
 }
