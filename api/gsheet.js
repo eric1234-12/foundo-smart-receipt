@@ -1,17 +1,19 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ status: 'error', message: 'Only POST allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ status: 'error', message: 'Only POST allowed' });
+  }
 
   try {
     const { invoice, date, note, amount, brand, base64, mimeType } = req.body;
 
-    // 校验基本字段
+    // 校验必要字段
     if (!invoice || !date || !amount || !brand) {
       return res.status(400).json({ status: 'error', message: '缺少必要字段：invoice, date, amount, brand' });
     }
 
     let imageUrl = '';
 
-    // ✅ 上传图片或PDF到 Google Drive（使用 Google Apps Script Web App）
+    // ✅ 上传文件到 Google Drive
     if (base64 && mimeType) {
       const uploadRes = await fetch(
         'https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',
@@ -34,24 +36,25 @@ export default async function handler(req, res) {
       imageUrl = uploadData.imageUrl;
     }
 
-    // ✅ 构造数据行
-    const row = {
-      invoice: invoice || '',
-      date: date || '',
-      note: note || '',
-      rrAmount: brand === 'RR' ? amount : '',
-      aunteaAmount: brand === 'auntea jenny' ? amount : '',
-      timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" }),
-      imageUrl
-    };
-
-    // ✅ 写入 Google Sheet
+    // ✅ 写入 Google Sheet（注意字段是直接展开发送）
     const sheetRes = await fetch(
       'https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appendOnly: true, row })
+        body: JSON.stringify({
+          appendOnly: true,
+          invoice,
+          date,
+          note: note || '',
+          amount,
+          brand,
+          base64,
+          mimeType,
+          filename: `${invoice || 'receipt'}_${Date.now()}`,
+          timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" }),
+          imageUrl
+        })
       }
     );
 
