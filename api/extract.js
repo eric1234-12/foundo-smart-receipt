@@ -3,7 +3,11 @@ import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req, res) {
-  const { imageBase64 } = req.body;
+  const { imageBase64, mimeType } = req.body;
+
+  // 清理 base64 空格和换行
+  const cleanBase64 = imageBase64.replace(/\s/g, "").trim();
+
   const prompt = `
 你将获得一张票据的OCR文字内容，请你从中提取以下字段：
 1. 发票号（invoice no / INV / invoice）：只提取编号
@@ -28,7 +32,9 @@ export default async function handler(req, res) {
           content: [
             {
               type: "image_url",
-              image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
+              image_url: {
+                url: `data:${mimeType || "image/jpeg"};base64,${cleanBase64}`
+              }
             }
           ]
         }
@@ -38,7 +44,6 @@ export default async function handler(req, res) {
 
     const raw = visionRes.choices[0]?.message?.content || "";
 
-    // ✅ 处理 markdown 格式输出
     const cleaned = raw
       .replace(/^```json\s*/i, "")
       .replace(/^```\s*/i, "")
