@@ -44,13 +44,16 @@ export default async function handler(req, res) {
       max_tokens: 300
     });
 
-    const response = visionRes.choices[0]?.message?.content?.trim();
-    if (!response) {
+    const raw = visionRes.choices[0]?.message?.content?.trim();
+    if (!raw) {
       throw new Error("模型未返回结果");
     }
 
-    // 去除markdown标记后解析
-    const cleaned = response.replace(/```json|```/g, "").trim();
+    // 尝试提取 JSON 字符串
+    const match = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || raw.match(/{[\s\S]*}/);
+    if (!match) throw new Error("未找到有效 JSON 输出");
+
+    const cleaned = match[1] || match[0];
     const parsed = JSON.parse(cleaned);
 
     res.status(200).json(parsed);
