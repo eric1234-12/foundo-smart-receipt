@@ -5,87 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FOUNDO SMART 收据识别</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-    }
-    h1 {
-      color: #e65c00;
-    }
-    #uploadBtn {
-      background: #e65c00;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      margin-left: 10px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    #resultContainer {
-      margin-top: 30px;
-      font-size: 18px;
-      color: green;
-    }
+    body { font-family: Arial, sans-serif; padding: 2rem; }
+    h1 { color: #e65c00; }
+    #uploadBtn { background: #e65c00; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+    #resultContainer { margin-top: 20px; font-size: 16px; }
     #confirmModal {
-      display: none;
-      position: fixed;
-      top: 20%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #fff;
-      border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 8px;
+      display: none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%);
+      background: #fff; padding: 20px; border-radius: 8px; width: 320px; box-shadow: 0 0 10px rgba(0,0,0,0.2);
       z-index: 9999;
-      width: 300px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
-    #confirmBtn {
-      background-color: #e65c00;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      margin-right: 10px;
-      cursor: pointer;
-    }
-    #confirmBtn:hover {
-      background-color: #cc5200;
-    }
-    #cancelBtn {
-      background-color: #888;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      cursor: pointer;
-    }
-    #cancelBtn:hover {
-      background-color: #666;
+    #confirmPage {
+      display: none; margin-top: 20px; padding: 10px; border: 1px solid #ccc;
     }
   </style>
 </head>
 <body>
   <h1>FOUNDO SMART 收据识别</h1>
-  <input type="file" id="fileInput" accept="image/*" />
+  <input type="file" id="fileInput" />
   <button id="uploadBtn">上传并识别</button>
 
   <div id="resultContainer"></div>
 
   <!-- 弹窗 -->
   <div id="confirmModal">
-    <p id="modalText"></p>
-    <label>备注：<input type="text" id="noteInput" style="width:100%;" /></label><br><br>
-    <label>类别：
-      <select id="categorySelect" style="width:100%;">
-        <option value="supermarkt">supermarkt</option>
-        <option value="HD">HD</option>
-        <option value="HD Fruit">HD Fruit</option>
-        <option value="HD Milk">HD Milk</option>
-        <option value="HD MILK2">HD MILK2</option>
-        <option value="OTHERS">OTHERS</option>
+    <p>📝 系统识别成功，请填写以下内容：</p>
+    <label>备注：<input type="text" id="noteInput" style="width:100%" /></label><br><br>
+    <label>一级分类：
+      <select id="brandSelect" style="width:100%">
+        <option value="RR">RR</option>
+        <option value="Auntea Jenny">Auntea Jenny</option>
       </select>
     </label><br><br>
-    <button id="confirmBtn">确认上传</button>
-    <button id="cancelBtn" onclick="document.getElementById('confirmModal').style.display='none'">取消</button>
+    <label>二级类别：
+      <select id="categorySelect" style="width:100%"></select>
+    </label><br><br>
+    <button id="nextBtn">下一步确认</button>
+    <button onclick="document.getElementById('confirmModal').style.display='none'">取消</button>
+  </div>
+
+  <div id="confirmPage">
+    <h3>请确认以下内容：</h3>
+    <pre id="confirmDetails"></pre>
+    <button id="finalConfirmBtn">✅ 确认提交</button>
   </div>
 
   <script src="script.js"></script>
