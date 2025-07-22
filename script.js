@@ -18,6 +18,11 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     fileType = result.split(";")[0].split(":")[1]; // MIME类型：image/jpeg 或 application/pdf
     base64File = result.split(",")[1];
 
+    if (!base64File || base64File.length < 100) {
+      resultContainer.innerHTML = "❌ 文件内容无效，请重新上传清晰图片";
+      return;
+    }
+
     resultContainer.innerText = "📤 正在上传识别...";
 
     try {
@@ -25,7 +30,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          base64: base64File,
+          imageBase64: base64File,  // ✅ 改这里，后端需要的是 imageBase64
           mimeType: fileType
         })
       });
