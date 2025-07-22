@@ -3,9 +3,12 @@ import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req, res) {
-  const { imageBase64, mimeType } = req.body;
+  const { imageBase64 } = req.body;
 
-  // 清理 base64 空格和换行
+  if (!imageBase64) {
+    return res.status(400).json({ error: "缺少 imageBase64 参数" });
+  }
+
   const cleanBase64 = imageBase64.replace(/\s/g, "").trim();
 
   const prompt = `
@@ -33,7 +36,7 @@ export default async function handler(req, res) {
             {
               type: "image_url",
               image_url: {
-                url: `data:${mimeType || "image/jpeg"};base64,${cleanBase64}`
+                url: `data:image/jpeg;base64,${cleanBase64}`
               }
             }
           ]
