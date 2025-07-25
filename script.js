@@ -12,7 +12,8 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
-    const base64Image = reader.result.split(",")[1]; // 确保变量定义
+    const base64Image = reader.result.split(",")[1];
+
     try {
       // 调用后端 API 进行识别
       const extractRes = await fetch("/api/extract", {
@@ -34,8 +35,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
       document.getElementById("dateInput").value = date || "";
       document.getElementById("productInput").value = products || "";
 
-      // 记录数据
-      pendingUploadData = { invoice, amount, date, products, imageBase64: base64Image };
+      pendingUploadData = { invoice, amount, date, product: products, imageBase64: base64Image };
 
       document.getElementById("confirmModal").style.display = "block";
     } catch (err) {
@@ -79,7 +79,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     invoice: document.getElementById("invoiceInput").value.trim(),
     amount: document.getElementById("amountInput").value.trim(),
     date: document.getElementById("dateInput").value.trim(),
-    products: document.getElementById("productInput").value.trim(),
+    product: document.getElementById("productInput").value.trim(),
     paid,
     payer,
     note: document.getElementById("noteInput").value.trim(),
@@ -91,7 +91,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
 发票号：${pendingUploadData.invoice}
 金额：${pendingUploadData.amount}
 日期：${pendingUploadData.date}
-采购产品：${pendingUploadData.products}
+采购产品：${pendingUploadData.product}
 付款状态：${paid === "yes" ? "已付款" : "未付款（垫付：" + payer + ")"}
 备注：${pendingUploadData.note}
 品牌：${pendingUploadData.brand}
@@ -106,6 +106,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
 document.getElementById("finalConfirmBtn").addEventListener("click", async () => {
   if (!pendingUploadData) return;
   try {
+    console.log("提交的数据：", pendingUploadData);
     await fetch("/api/gsheet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
