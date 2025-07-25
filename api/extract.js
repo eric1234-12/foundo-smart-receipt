@@ -35,7 +35,12 @@ export default async function handler(req, res) {
         { role: "system", content: prompt },
         {
           role: "user",
-          content: [{ type: "input_image", image_base64: imageBase64 }],
+          content: [
+            {
+              type: "image_url", // ⚠️ 这里改了
+              image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+            },
+          ],
         },
       ],
       max_tokens: 300,
