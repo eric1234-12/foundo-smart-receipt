@@ -4,11 +4,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { invoice, date, note, amount, brand, base64, mimeType } = req.body;
+    const {
+      invoice,
+      date,
+      note,
+      amount,
+      brand,
+      base64,
+      mimeType,
+      product,  // 采购产品
+      paid,     // 是否已付款
+      payer     // 垫付人员
+    } = req.body;
 
     // 校验必要字段
     if (!invoice || !date || !amount || !brand) {
-      return res.status(400).json({ status: 'error', message: '缺少必要字段：invoice, date, amount, brand' });
+      return res.status(400).json({
+        status: 'error',
+        message: '缺少必要字段：invoice, date, amount, brand'
+      });
     }
 
     let imageUrl = '';
@@ -31,12 +45,15 @@ export default async function handler(req, res) {
 
       const uploadData = await uploadRes.json();
       if (!uploadData.imageUrl) {
-        return res.status(500).json({ status: 'error', message: '图片上传失败' });
+        return res.status(500).json({
+          status: 'error',
+          message: '图片上传失败'
+        });
       }
       imageUrl = uploadData.imageUrl;
     }
 
-    // ✅ 写入 Google Sheet（注意字段是直接展开发送）
+    // ✅ 写入 Google Sheet
     const sheetRes = await fetch(
       'https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',
       {
@@ -46,8 +63,11 @@ export default async function handler(req, res) {
           appendOnly: true,
           invoice,
           date,
-          note: note || '',
           amount,
+          product: product || '',
+          paid: paid || 'yes',
+          payer: payer || '',
+          note: note || '',
           brand,
           base64,
           mimeType,
