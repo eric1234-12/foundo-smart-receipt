@@ -12,8 +12,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = async () => {
-    const base64Image = reader.result.split(",")[1];
-
+    const base64Image = reader.result.split(",")[1]; // 确保变量定义
     try {
       // 调用后端 API 进行识别
       const extractRes = await fetch("/api/extract", {
@@ -22,7 +21,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
         body: JSON.stringify({ imageBase64: base64Image })
       });
 
-      const { date, amount, invoice, product, error } = await extractRes.json();
+      const { date, amount, invoice, products, error } = await extractRes.json();
 
       if (error) {
         alert("识别失败: " + error);
@@ -33,9 +32,10 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
       document.getElementById("invoiceInput").value = invoice || "";
       document.getElementById("amountInput").value = amount || "";
       document.getElementById("dateInput").value = date || "";
-      document.getElementById("productInput").value = product || "";
+      document.getElementById("productInput").value = products || "";
 
-      pendingUploadData = { invoice, amount, date, product, imageBase64 };
+      // 记录数据
+      pendingUploadData = { invoice, amount, date, products, imageBase64: base64Image };
 
       document.getElementById("confirmModal").style.display = "block";
     } catch (err) {
@@ -79,7 +79,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     invoice: document.getElementById("invoiceInput").value.trim(),
     amount: document.getElementById("amountInput").value.trim(),
     date: document.getElementById("dateInput").value.trim(),
-    product: document.getElementById("productInput").value.trim(),
+    products: document.getElementById("productInput").value.trim(),
     paid,
     payer,
     note: document.getElementById("noteInput").value.trim(),
@@ -91,7 +91,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
 发票号：${pendingUploadData.invoice}
 金额：${pendingUploadData.amount}
 日期：${pendingUploadData.date}
-采购产品：${pendingUploadData.product}
+采购产品：${pendingUploadData.products}
 付款状态：${paid === "yes" ? "已付款" : "未付款（垫付：" + payer + ")"}
 备注：${pendingUploadData.note}
 品牌：${pendingUploadData.brand}
