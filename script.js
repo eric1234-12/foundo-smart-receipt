@@ -1,111 +1,122 @@
-let base64File = "";
-let fileType = "";
-let extractedData = {};
+let pendingUploadData = null;
 
-const fileInput = document.getElementById("fileInput");
-const resultContainer = document.getElementById("resultContainer");
-
-// 上传按钮点击
+// 上传并识别
 document.getElementById("uploadBtn").addEventListener("click", async () => {
+  const fileInput = document.getElementById("fileInput");
   const file = fileInput.files[0];
-  if (!file) return alert("请选择图片或 PDF");
+  if (!file) {
+    alert("请先选择图片文件！");
+    return;
+  }
 
   const reader = new FileReader();
   reader.readAsDataURL(file);
-
   reader.onload = async () => {
-    const result = reader.result;
-    fileType = result.split(";")[0].split(":")[1]; // MIME类型：image/jpeg 或 application/pdf
-    base64File = result.split(",")[1];
-
-    if (!base64File || base64File.length < 100) {
-      resultContainer.innerHTML = "❌ 文件内容无效，请重新上传清晰图片";
-      return;
-    }
-
-    resultContainer.innerText = "📤 正在上传识别...";
+    const base64Image = reader.result.split(",")[1];
 
     try {
+      // 调用后端 API 进行识别
       const extractRes = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageBase64: base64File,  // ✅ 改这里，后端需要的是 imageBase64
-          mimeType: fileType
-        })
+        body: JSON.stringify({ imageBase64: base64Image })
       });
 
-      const data = await extractRes.json();
-      if (!data || !data.invoice || !data.amount || !data.date) {
-        resultContainer.innerHTML = "❌ 无法识别内容，请上传清晰票据";
+      const { date, amount, invoice, product, error } = await extractRes.json();
+
+      if (error) {
+        alert("识别失败: " + error);
         return;
       }
 
-      extractedData = { ...data };
-      document.getElementById("noteInput").value = "";
+      // 填入识别结果
+      document.getElementById("invoiceInput").value = invoice || "";
+      document.getElementById("amountInput").value = amount || "";
+      document.getElementById("dateInput").value = date || "";
+      document.getElementById("productInput").value = product || "";
+
+      pendingUploadData = { invoice, amount, date, product, imageBase64 };
+
       document.getElementById("confirmModal").style.display = "block";
     } catch (err) {
-      resultContainer.innerHTML = "❌ 识别失败：" + err.message;
+      alert("提取字段失败！");
+      console.error("❌ 提取异常:", err);
     }
   };
 });
 
-// 品牌联动分类
-const brandSelect = document.getElementById("brandSelect");
-const categorySelect = document.getElementById("categorySelect");
-
-brandSelect.addEventListener("change", () => {
-  const brand = brandSelect.value;
-  const options = brand === "RR"
-    ? ["supermarket", "AB BAKERY", "TAKA BAKERY", "Cake SP", "Fruit SP", "tools", "others"]
-    : ["HD", "HD MILK", "HD Fruit", "supermarket", "tools", "others"];
-  categorySelect.innerHTML = options.map(o => `<option value="${o}">${o}</option>`).join("");
+// 切换已付款/未付款显示垫付人员
+document.getElementById("paidSelect").addEventListener("change", (e) => {
+  document.getElementById("advancePayment").style.display =
+    e.target.value === "no" ? "block" : "none";
 });
-brandSelect.dispatchEvent(new Event("change"));
 
-// 下一步按钮
+// 切换其他人员输入框
+document.getElementById("payerSelect").addEventListener("change", (e) => {
+  document.getElementById("otherPayerLabel").style.display =
+    e.target.value === "other" ? "block" : "none";
+});
+
+// 下一步确认
 document.getElementById("nextBtn").addEventListener("click", () => {
-  const note = document.getElementById("noteInput").value.trim();
-  const brand = brandSelect.value;
-  const category = categorySelect.value;
+  if (!pendingUploadData) return;
 
-  extractedData.note = note;
-  extractedData.brand = brand;
-  extractedData.category = category;
+  const paid = document.getElementById("paidSelect").value;
+  let payer = "";
+  if (paid === "no") {
+    payer = document.getElementById("payerSelect").value;
+    if (payer === "other") {
+      payer = document.getElementById("otherPayerInput").value.trim();
+      if (!payer) {
+        alert("请选择或填写垫付人员！");
+        return;
+      }
+    }
+  }
 
-  const display = brand === "RR"
-    ? [extractedData.invoice, extractedData.date, extractedData.amount, note, "", category]
-    : [extractedData.invoice, extractedData.date, extractedData.amount, note, category, ""];
+  pendingUploadData = {
+    ...pendingUploadData,
+    invoice: document.getElementById("invoiceInput").value.trim(),
+    amount: document.getElementById("amountInput").value.trim(),
+    date: document.getElementById("dateInput").value.trim(),
+    product: document.getElementById("productInput").value.trim(),
+    paid,
+    payer,
+    note: document.getElementById("noteInput").value.trim(),
+    brand: document.getElementById("brandSelect").value,
+    category: document.getElementById("categorySelect").value
+  };
 
-  document.getElementById("confirmDetails").innerText = display.join("\n");
+  const details = `
+发票号：${pendingUploadData.invoice}
+金额：${pendingUploadData.amount}
+日期：${pendingUploadData.date}
+采购产品：${pendingUploadData.product}
+付款状态：${paid === "yes" ? "已付款" : "未付款（垫付：" + payer + ")"}
+备注：${pendingUploadData.note}
+品牌：${pendingUploadData.brand}
+类别：${pendingUploadData.category}
+  `;
+  document.getElementById("confirmDetails").textContent = details;
   document.getElementById("confirmModal").style.display = "none";
   document.getElementById("confirmPage").style.display = "block";
 });
 
-// 最终确认上传
+// 最终确认提交
 document.getElementById("finalConfirmBtn").addEventListener("click", async () => {
-  const btn = document.getElementById("finalConfirmBtn");
-  btn.disabled = true;
-  resultContainer.innerText = "📤 正在上传并写入表格...";
-
+  if (!pendingUploadData) return;
   try {
-    const uploadRes = await fetch("/api/gsheet", {
+    await fetch("/api/gsheet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...extractedData,
-        base64: base64File,
-        mimeType: fileType
-      })
+      body: JSON.stringify(pendingUploadData)
     });
 
-    const result = await uploadRes.json();
-    if (result.status === "ok") {
-      resultContainer.innerHTML = "✅ 上传成功！";
-    } else {
-      resultContainer.innerHTML = "❌ 上传失败：" + result.message;
-    }
+    document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${pendingUploadData.date}`;
+    document.getElementById("confirmPage").style.display = "none";
+    pendingUploadData = null;
   } catch (err) {
-    resultContainer.innerHTML = "❌ 上传失败：" + err.message;
+    alert("同步 Google Sheet 失败");
+    console.error(err);
   }
 });
