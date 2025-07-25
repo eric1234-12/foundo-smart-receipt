@@ -4,30 +4,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const {
-      invoice,
-      date,
-      note,
-      amount,
-      brand,
-      base64,
-      mimeType,
-      product,  // 采购产品
-      paid,     // 是否已付款
-      payer     // 垫付人员
-    } = req.body;
+    const { invoice, date, note, amount, product, paid, payer, brand, category, base64, mimeType } = req.body;
 
-    // 校验必要字段
-    if (!invoice || !date || !amount || !brand) {
-      return res.status(400).json({
-        status: 'error',
-        message: '缺少必要字段：invoice, date, amount, brand'
-      });
+    if (!invoice || !date || !amount) {
+      return res.status(400).json({ status: 'error', message: '缺少必要字段：invoice, date, amount' });
     }
 
     let imageUrl = '';
-
-    // ✅ 上传文件到 Google Drive
     if (base64 && mimeType) {
       const uploadRes = await fetch(
         'https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',
@@ -45,15 +28,12 @@ export default async function handler(req, res) {
 
       const uploadData = await uploadRes.json();
       if (!uploadData.imageUrl) {
-        return res.status(500).json({
-          status: 'error',
-          message: '图片上传失败'
-        });
+        return res.status(500).json({ status: 'error', message: '图片上传失败' });
       }
       imageUrl = uploadData.imageUrl;
     }
 
-    // ✅ 写入 Google Sheet
+    // 写入 Google Sheet
     const sheetRes = await fetch(
       'https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',
       {
@@ -64,14 +44,12 @@ export default async function handler(req, res) {
           invoice,
           date,
           amount,
-          product: product || '',
-          paid: paid || 'yes',
-          payer: payer || '',
+          product,
+          paid,
+          payer,
           note: note || '',
           brand,
-          base64,
-          mimeType,
-          filename: `${invoice || 'receipt'}_${Date.now()}`,
+          category,
           timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" }),
           imageUrl
         })
