@@ -80,18 +80,18 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     }
   }
 
-  pendingUploadData = {
-    ...pendingUploadData,
-    invoice: document.getElementById("invoiceInput").value.trim(),
-    amount: document.getElementById("amountInput").value.trim(),
-    date: document.getElementById("dateInput").value.trim(),
-    product: document.getElementById("productInput").value.trim(),
-    paid,
-    payer,
-    note: document.getElementById("noteInput").value.trim(),
-    brand: document.getElementById("brandSelect").value,
-    category: document.getElementById("categorySelect").value
-  };
+ pendingUploadData = {
+  invoice: document.getElementById("invoiceInput").value.trim(),
+  amount: document.getElementById("amountInput").value.trim(),
+  date: document.getElementById("dateInput").value.trim(),
+  product: document.getElementById("productInput").value.trim(),
+  paid,
+  payer,
+  note: document.getElementById("noteInput").value.trim(),
+  brand: document.getElementById("brandSelect").value,
+  category: document.getElementById("categorySelect").value,
+  imageBase64: pendingUploadData?.imageBase64 || ""
+};
 
   const details = `
 发票号：${pendingUploadData.invoice}
