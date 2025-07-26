@@ -35,7 +35,13 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
       document.getElementById("dateInput").value = date || "";
       document.getElementById("productInput").value = products || "";
 
-      pendingUploadData = { invoice, amount, date, product: products, imageBase64: base64Image };
+      pendingUploadData = { 
+        invoice: invoice || "", 
+        amount: amount || "", 
+        date: date || "", 
+        product: products || "", 
+        imageBase64: base64Image 
+      };
 
       document.getElementById("confirmModal").style.display = "block";
     } catch (err) {
@@ -105,15 +111,29 @@ document.getElementById("nextBtn").addEventListener("click", () => {
 // 最终确认提交
 document.getElementById("finalConfirmBtn").addEventListener("click", async () => {
   if (!pendingUploadData) return;
+
+  const payload = {
+    invoice: pendingUploadData.invoice || "",
+    date: pendingUploadData.date || "",
+    amount: pendingUploadData.amount || "",
+    product: pendingUploadData.product || "",
+    paid: pendingUploadData.paid || "",
+    payer: pendingUploadData.payer || "",
+    note: pendingUploadData.note || "",
+    brand: pendingUploadData.brand || "",
+    category: pendingUploadData.category || "",
+    imageBase64: pendingUploadData.imageBase64 || ""
+  };
+
   try {
-    console.log("提交的数据：", pendingUploadData);
+    console.log("提交的数据：", payload);
     await fetch("/api/gsheet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pendingUploadData)
+      body: JSON.stringify(payload)
     });
 
-    document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${pendingUploadData.date}`;
+    document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${payload.date}`;
     document.getElementById("confirmPage").style.display = "none";
     pendingUploadData = null;
   } catch (err) {
