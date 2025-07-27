@@ -89,4 +89,5 @@ ${catalog.join("\n")}
     console.error("extract-lines error:", e);
     return res.status(500).json({ error: e.message || "提取失败" });
   }
+  console.log("提交到后端的数据：", rows);
 }
