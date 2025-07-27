@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>发票分行入库</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 16px; }
+    h1 { color: #e65c00; }
+    button { cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    table, th, td { border: 1px solid #ddd; }
+    th, td { padding: 8px; font-size: 14px; }
+    .hidden { display: none; }
+    #preview { margin-top: 24px; }
+    #submitBtn { margin-top: 16px; background:#e65c00; color:#fff; border: none; padding: 10px 18px; }
+    #uploadBtn { background:#e65c00; color:#fff; border:none; padding:8px 14px; }
+    input[type="text"], select { width: 100%; box-sizing: border-box; }
+    #status { margin-top:10px; color: green; }
+    #error { margin-top:10px; color: red; }
+  </style>
+</head>
+<body>
+  <h1>发票分行入库</h1>
+
+  <div>
+    <input type="file" id="fileInput" accept="image/*" />
+    <button id="uploadBtn">上传并解析</button>
+  </div>
+
+  <div style="margin-top: 16px;">
+    <label>统一备注（会写入每一条）：<br/>
+      <input id="remarkInput" type="text" placeholder="填写备注（所有行同样备注）"/>
+    </label>
+    <br/><br/>
+    <label>Payment Method：
+      <select id="paymentMethodSelect">
+        <option value="Cash">Cash</option>
+        <option value="Card">Card</option>
+        <option value="Online">Online</option>
+        <option value="Others">Others</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="preview" class="hidden">
+    <h3>识别结果（可修改）</h3>
+    <div>
+      <label>Invoice No：<input id="invInput" type="text"/></label>
+      <label>Date：<input id="dateInput" type="text"/></label>
+      <label>Supplier：<input id="supplierInput" type="text"/></label>
+      <label>Total Amount (RM)：<input id="totalInput" type="text"/></label>
+    </div>
+
+    <table id="lineTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product Name (Mapped)</th>
+          <th>Quantity</th>
+          <th>Line Total (RM)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button id="submitBtn">提交到 Google Sheet</button>
+  </div>
+
+  <div id="status"></div>
+  <div id="error"></div>
+
+  <script src="invoice-split.js"></script>
+</body>
+</html>
