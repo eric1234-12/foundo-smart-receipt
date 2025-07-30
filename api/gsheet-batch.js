@@ -8,15 +8,8 @@ export default async function handler(req, res) {
 
     const input = req.body;
 
-    if (!Array.isArray(input) || input.length === 0) {
-      console.error("❌ 请求体不是有效数组：", input);
-      return res.status(400).json({ status: 'error', message: '无有效数据提交' });
-    }
-
-    // 判断是否存在图片上传任务
-    const uploadOnlyTask = input.find(item => item.uploadOnly && item.base64);
-
-    if (uploadOnlyTask) {
+    // ✅ 图片上传任务
+    if (input.uploadOnly && input.base64) {
       console.log("📸 开始上传图片到 Google Drive...");
 
       const uploadRes = await fetch(GOOGLE_SCRIPT_URL, {
@@ -24,9 +17,9 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uploadOnly: true,
-          filename: uploadOnlyTask.filename || 'upload.jpg',
-          mimeType: uploadOnlyTask.mimeType || 'image/jpeg',
-          base64: uploadOnlyTask.base64
+          filename: input.filename || `upload_${Date.now()}.jpg`,
+          mimeType: input.mimeType || 'image/jpeg',
+          base64: input.base64
         })
       });
 
@@ -35,41 +28,46 @@ export default async function handler(req, res) {
         return null;
       });
 
-      if (!uploadData || !uploadData.url) {
+      if (!uploadData || !uploadData.imageUrl) {
         return res.status(500).json({ status: 'error', message: '图片上传失败', result: uploadData });
       }
 
-      console.log("✅ 图片上传成功:", uploadData.url);
-      return res.status(200).json({ status: 'ok', url: uploadData.url });
+      console.log("✅ 图片上传成功:", uploadData.imageUrl);
+      return res.status(200).json({ status: 'ok', imageUrl: uploadData.imageUrl });
     }
 
-    // 如果是写入 Google Sheet
-    const payload = {
-      appendBatch: true,
-      timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" }),
-      rows: input
-    };
+    // ✅ 数据写入 Google Sheet
+    if (input.appendBatch && Array.isArray(input.rows) && input.rows.length > 0) {
+      const payload = {
+        appendBatch: true,
+        timestamp: input.timestamp || new Date().toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" }),
+        rows: input.rows
+      };
 
-    console.log("📤 准备提交到 Google Sheet:", JSON.stringify(payload, null, 2));
+      console.log("📤 准备提交到 Google Sheet:", JSON.stringify(payload, null, 2));
 
-    const sheetRes = await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+      const sheetRes = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    const sheetData = await sheetRes.json().catch(err => {
-      console.error("❌ Google Script 返回非 JSON：", err);
-      return null;
-    });
+      const sheetData = await sheetRes.json().catch(err => {
+        console.error("❌ Google Script 返回非 JSON：", err);
+        return null;
+      });
 
-    if (!sheetData || sheetData.status !== 'ok') {
-      console.error('❌ Google Sheet 写入失败:', sheetData);
-      return res.status(500).json({ status: 'error', message: '写入 Google Sheet 失败', result: sheetData });
+      if (!sheetData || sheetData.status !== 'ok') {
+        console.error('❌ Google Sheet 写入失败:', sheetData);
+        return res.status(500).json({ status: 'error', message: '写入 Google Sheet 失败', result: sheetData });
+      }
+
+      console.log("✅ 表格写入成功:", sheetData);
+      return res.status(200).json({ status: 'ok', count: sheetData.count || 0, result: sheetData });
     }
 
-    console.log("✅ 表格写入成功:", sheetData);
-    return res.status(200).json({ status: 'ok', result: sheetData });
+    console.warn("⚠️ 无效的请求结构：", input);
+    return res.status(400).json({ status: 'error', message: '无效的请求结构' });
 
   } catch (err) {
     console.error('❌ 发生错误:', err);
