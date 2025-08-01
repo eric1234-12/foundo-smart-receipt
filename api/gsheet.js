@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     imageUrl = data.imageUrl;
   }
 
-  const sheetRes = await fetch(  'https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',{
+  const sheetRes = await fetch('https://script.google.com/macros/s/AKfycbxebo8fn4PVzl1j-E933KfyOMXCKWLFf1FdZ4iWTwGJC4Yeh5-TapEreZouobT_Y2fn/exec',{
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
