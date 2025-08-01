@@ -1,5 +1,31 @@
 let pendingUploadData = null;
 
+const brandToCategory = {
+  "RR": ["supermarket", "AB BAKERY", "TAKA BAKERY", "Cake SP", "Fruit SP", "tools", "others"],
+  "Auntea Jenny": ["HD", "HD MILK", "HD Fruit", "supermarket", "tools", "others"]
+};
+
+// 初始化二级下拉菜单联动
+document.getElementById("brandSelect").addEventListener("change", (e) => {
+  const brand = e.target.value;
+  const categorySelect = document.getElementById("categorySelect");
+  categorySelect.innerHTML = "";
+
+  if (brandToCategory[brand]) {
+    brandToCategory[brand].forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat;
+      opt.textContent = cat;
+      categorySelect.appendChild(opt);
+    });
+  } else {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "请选择品牌";
+    categorySelect.appendChild(opt);
+  }
+});
+
 // 上传并识别
 document.getElementById("uploadBtn").addEventListener("click", async () => {
   const fileInput = document.getElementById("fileInput");
@@ -15,7 +41,6 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     const base64Image = reader.result.split(",")[1];
 
     try {
-      // 调用后端 API 进行识别
       const extractRes = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,18 +54,17 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
         return;
       }
 
-      // 填入识别结果
       document.getElementById("invoiceInput").value = invoice || "";
       document.getElementById("amountInput").value = amount || "";
       document.getElementById("dateInput").value = date || "";
       document.getElementById("productInput").value = products || "";
 
-      pendingUploadData = { 
-        invoice: invoice || "", 
-        amount: amount || "", 
-        date: date || "", 
-        product: products || "", 
-        imageBase64: base64Image 
+      pendingUploadData = {
+        invoice: invoice || "",
+        amount: amount || "",
+        date: date || "",
+        product: products || "",
+        imageBase64: base64Image
       };
 
       document.getElementById("confirmModal").style.display = "block";
@@ -51,13 +75,12 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
   };
 });
 
-// 切换已付款/未付款显示垫付人员
+// 显示垫付人选项
 document.getElementById("paidSelect").addEventListener("change", (e) => {
   document.getElementById("advancePayment").style.display =
     e.target.value === "no" ? "block" : "none";
 });
 
-// 切换其他人员输入框
 document.getElementById("payerSelect").addEventListener("change", (e) => {
   document.getElementById("otherPayerLabel").style.display =
     e.target.value === "other" ? "block" : "none";
@@ -80,18 +103,18 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     }
   }
 
- pendingUploadData = {
-  invoice: document.getElementById("invoiceInput").value.trim(),
-  amount: document.getElementById("amountInput").value.trim(),
-  date: document.getElementById("dateInput").value.trim(),
-  product: document.getElementById("productInput").value.trim(),
-  paid,
-  payer,
-  note: document.getElementById("noteInput").value.trim(),
-  brand: document.getElementById("brandSelect").value,
-  category: document.getElementById("categorySelect").value,
-  imageBase64: pendingUploadData?.imageBase64 || ""
-};
+  pendingUploadData = {
+    invoice: document.getElementById("invoiceInput").value.trim(),
+    amount: document.getElementById("amountInput").value.trim(),
+    date: document.getElementById("dateInput").value.trim(),
+    product: document.getElementById("productInput").value.trim(),
+    paid,
+    payer,
+    note: document.getElementById("noteInput").value.trim(),
+    brand: document.getElementById("brandSelect").value,
+    category: document.getElementById("categorySelect").value,
+    imageBase64: pendingUploadData?.imageBase64 || ""
+  };
 
   const details = `
 发票号：${pendingUploadData.invoice}
@@ -113,25 +136,29 @@ document.getElementById("finalConfirmBtn").addEventListener("click", async () =>
   if (!pendingUploadData) return;
 
   const payload = {
-    invoice: pendingUploadData.invoice || "",
-    date: pendingUploadData.date || "",
-    amount: pendingUploadData.amount || "",
-    product: pendingUploadData.product || "",
-    paid: pendingUploadData.paid || "",
-    payer: pendingUploadData.payer || "",
-    note: pendingUploadData.note || "",
-    brand: pendingUploadData.brand || "",
-    category: pendingUploadData.category || "",
-    imageBase64: pendingUploadData.imageBase64 || ""
+    invoice: pendingUploadData.invoice,
+    date: pendingUploadData.date,
+    amount: pendingUploadData.amount,
+    product: pendingUploadData.product,
+    paid: pendingUploadData.paid,
+    payer: pendingUploadData.payer,
+    note: pendingUploadData.note,
+    brand: pendingUploadData.brand,
+    category: pendingUploadData.category,
+    imageBase64: pendingUploadData.imageBase64
   };
 
   try {
     console.log("提交的数据：", payload);
-    await fetch("/api/gsheet", {
+    const resp = await fetch("/api/gsheet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
+
+    if (!resp.ok) {
+      throw new Error("同步失败");
+    }
 
     document.getElementById("resultContainer").innerHTML = `✅ 成功 - ${payload.date}`;
     document.getElementById("confirmPage").style.display = "none";
