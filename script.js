@@ -95,6 +95,7 @@ document.getElementById("nextBtn").addEventListener("click", () => {
 
 document.getElementById("finalConfirmBtn").addEventListener("click", async () => {
   if (!pendingUploadData) return;
+  console.log("🟡 正准备提交的数据：", pendingUploadData);
   const res = await fetch("/api/gsheet", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
