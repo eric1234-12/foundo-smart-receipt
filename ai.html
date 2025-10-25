@@ -9,20 +9,9 @@
   new CozeWebSDK.WebChatClient({
     config: {
       bot_id: '7565164287006638087',
-      open: true  // 添加这一行，打开页面直接显示对话框
     },
     componentProps: {
-     title: 'Coze',
-  // 可选：自定义尺寸
-  size: {
-    width: '400px',
-    height: '600px'
-  },
-  // 可选：自定义位置
-  position: {
-    bottom: '20px',
-    right: '20px'
-  }
+      title: 'Coze',
     },
     auth: {
       type: 'token',
@@ -32,6 +21,17 @@
       }
     }
   });
+  
+  // 简单粗暴：连续尝试点击
+  setTimeout(() => {
+    const buttons = document.querySelectorAll('button, div');
+    buttons.forEach(btn => {
+      if (btn.innerHTML.includes('coze') || btn.className.includes('coze') || 
+          btn.style && (btn.style.cursor === 'pointer' && btn.style.position === 'fixed')) {
+        btn.click();
+      }
+    });
+  }, 2000);
 </script>
   
 </body>
