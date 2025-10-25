@@ -11,7 +11,27 @@
       bot_id: '7565164287006638087',
     },
     componentProps: {
-      title: 'Coze',
+      title: 'FOUNDO AI', // 修改标题
+      // 添加header配置替换左上角Logo
+      header: {
+        style: {
+          text: 'FOUNDO AI', // 使用文字替代
+          textStyle: {
+            color: '#000000',
+            fontSize: '16px',
+            fontWeight: 'bold'
+          }
+        }
+      },
+      // 可选：同时替换右下角图标
+      icon: {
+        style: {
+          text: '💬', // 使用Emoji作为右下角图标
+          textStyle: {
+            fontSize: '24px'
+          }
+        }
+      }
     },
     auth: {
       type: 'token',
