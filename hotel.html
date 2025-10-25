@@ -1,1 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  
+</head>
+<body>
+<script src="https://sf-cdn.coze.com/obj/unpkg-va/flow-platform/chat-app-sdk/1.2.0-beta.6/libs/oversea/index.js"></script>
+<script>
+  new CozeWebSDK.WebChatClient({
+    config: {
+      bot_id: '7565208710474366994',
+    },
+    componentProps: {
+      title: 'FOUNDO AI',
+    },
+    auth: {
+      type: 'token',
+      token: 'pat_XS3c4EiNz2745CvuBzL7UfCyXo5YP8O0hDeYSIPWHDexG9LzV5ZNy2t4TkEUqR6c',
+      onRefreshToken: function () {
+        return 'pat_XS3c4EiNz2745CvuBzL7UfCyXo5YP8O0hDeYSIPWHDexG9LzV5ZNy2t4TkEUqR6c'
+      }
+    }
+  });
 
+  // 增强版自动打开代码 - 多层级尝试
+  function autoOpenChat() {
+    console.log('尝试自动打开聊天框...');
+    
+    // 方法1：通过特定选择器查找
+    const selectors = [
+      '[data-testid*="coze"]',
+      '[class*="coze-launcher"]',
+      '[class*="CozeLauncher"]',
+      '.coze-web-sdk-launcher',
+      'button[style*="fixed"]',
+      'div[style*="fixed"]',
+      'button[style*="bottom"]',
+      'div[style*="bottom"]'
+    ];
+    
+    for (let selector of selectors) {
+      const elements = document.querySelectorAll(selector);
+      for (let element of elements) {
+        const style = window.getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        
+        // 检查是否是右下角的固定位置元素
+        if (style.position === 'fixed' && 
+            (style.bottom === '20px' || style.right === '20px' || 
+             parseInt(style.bottom) > 10 || parseInt(style.right) > 10) &&
+            rect.width > 30 && rect.height > 30) {
+          console.log('找到聊天按钮:', element);
+          element.click();
+          return true;
+        }
+      }
+    }
+    
+    // 方法2：查找所有固定定位元素
+    const allFixed = document.querySelectorAll('*');
+    for (let element of allFixed) {
+      const style = window.getComputedStyle(element);
+      if (style.position === 'fixed') {
+        const rect = element.getBoundingClientRect();
+        // 检查是否在右下角区域
+        if (rect.bottom > window.innerHeight - 100 && rect.right > window.innerWidth - 100) {
+          console.log('找到右下角固定元素:', element);
+          element.click();
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  // 多重尝试机制
+  let attemptCount = 0;
+  const maxAttempts = 8;
+  
+  const tryInterval = setInterval(() => {
+    attemptCount++;
+    console.log(`尝试第 ${attemptCount} 次...`);
+    
+    if (autoOpenChat()) {
+      console.log('成功打开聊天框！');
+      clearInterval(tryInterval);
+    } else if (attemptCount >= maxAttempts) {
+      console.log('无法自动打开聊天框，请手动点击右下角图标');
+      clearInterval(tryInterval);
+    }
+  }, 800); // 每800ms尝试一次
+
+  // 额外：监听点击事件作为备用方案
+  document.addEventListener('click', function() {
+    setTimeout(autoOpenChat, 100);
+  });
+  
+</script>
+  
+</body>
+</html>
