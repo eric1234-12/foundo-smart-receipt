@@ -11,27 +11,13 @@
       bot_id: '7565164287006638087',
     },
     componentProps: {
-      title: 'FOUNDO AI', // 修改标题
-      // 添加header配置替换左上角Logo
-      header: {
-        style: {
-          text: 'FOUNDO AI', // 使用文字替代
-          textStyle: {
-            color: '#000000',
-            fontSize: '16px',
-            fontWeight: 'bold'
-          }
-        }
-      },
-      // 可选：同时替换右下角图标
-      icon: {
-        style: {
-          text: '💬', // 使用Emoji作为右下角图标
-          textStyle: {
-            fontSize: '24px'
-          }
-        }
-      }
+      title: 'FOUNDO AI',
+      // 移除header配置，依赖title显示
+      // header: {
+      //   style: {
+      //     text: 'FOUNDO AI',
+      //   }
+      // }
     },
     auth: {
       type: 'token',
@@ -42,16 +28,29 @@
     }
   });
   
-  // 简单粗暴：连续尝试点击
+  // 改进的自动打开代码
   setTimeout(() => {
-    const buttons = document.querySelectorAll('button, div');
-    buttons.forEach(btn => {
-      if (btn.innerHTML.includes('coze') || btn.className.includes('coze') || 
-          btn.style && (btn.style.cursor === 'pointer' && btn.style.position === 'fixed')) {
-        btn.click();
+    // 方法1：查找Coze相关元素
+    const cozeElements = document.querySelectorAll('[class*="coze"], [class*="Coze"], [data-coze]');
+    cozeElements.forEach(element => {
+      if (element.style && element.style.position === 'fixed' && 
+          (element.style.bottom === '20px' || element.style.right === '20px')) {
+        element.click();
       }
     });
-  }, 2000);
+    
+    // 方法2：如果方法1没找到，尝试查找按钮元素
+    if (cozeElements.length === 0) {
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(btn => {
+        const rect = btn.getBoundingClientRect();
+        if (rect.width > 40 && rect.height > 40 && 
+            window.getComputedStyle(btn).position === 'fixed') {
+          btn.click();
+        }
+      });
+    }
+  }, 2500);
 </script>
   
 </body>
