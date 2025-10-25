@@ -9,9 +9,20 @@
   new CozeWebSDK.WebChatClient({
     config: {
       bot_id: '7565164287006638087',
+      open: true  // 添加这一行，打开页面直接显示对话框
     },
     componentProps: {
-      title: 'Coze',
+     title: 'Coze',
+  // 可选：自定义尺寸
+  size: {
+    width: '400px',
+    height: '600px'
+  },
+  // 可选：自定义位置
+  position: {
+    bottom: '20px',
+    right: '20px'
+  }
     },
     auth: {
       type: 'token',
